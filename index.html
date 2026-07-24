@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>So sánh điểm Benchmark đa nền tảng — 2026</title>
+<style>
+  :root {
+    --ink: #0d1210;
+    --paper: #eef0ea;
+    --panel: #ffffff;
+    --line: #c8cdc0;
+    --line-soft: #dde0d5;
+    --mono-dim: #6b7266;
+    --android-c: #3ddc84;
+    --ios-c: #a3aab8;
+    --win-c: #4f9eea;
+    --linux-c: #f2a341;
+    --warn-bg: #fff4e0;
+    --warn-line: #e0a83f;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --font-disp: 'Space Grotesk', 'Arial Narrow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.5;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+
+  .frame {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+
+  /* ===== HEADER / TERMINAL BAR ===== */
+  .termbar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .termbar .dots span {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #4a5048;
+    margin-right: 6px;
+  }
+  .termbar .status { color: #7fe6a8; }
+  .termbar .status::before { content: "● "; }
+
+  header.hero {
+    background: var(--panel);
+    border: 1px solid var(--ink);
+    border-top: none;
+    padding: 40px 32px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mono-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow .rule { flex: 1; height: 1px; background: var(--line); }
+
+  h1 {
+    font-family: var(--font-disp);
+    font-weight: 700;
+    font-size: clamp(32px, 5.4vw, 56px);
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+    max-width: 16ch;
+  }
+  h1 .num {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    -webkit-text-stroke: 0;
+  }
+  h1 .accent { color: var(--android-c); -webkit-text-stroke: 1.4px var(--ink); }
+
+  .hero-sub {
+    margin-top: 18px;
+    max-width: 62ch;
+    color: #3a4038;
+    font-size: 14.5px;
+  }
+  .hero-meta {
+    margin-top: 26px;
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--mono-dim);
+  }
+  .hero-meta b { color: var(--ink); font-weight: 600; }
+
+  /* ===== NOTICE ===== */
+  .notice {
+    margin-top: 18px;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    border-left: 4px solid var(--warn-line);
+    padding: 16px 20px;
+    font-size: 12.5px;
+    display: flex;
+    gap: 14px;
+  }
+  .notice .glyph {
+    font-family: var(--font-disp);
+    font-weight: 700;
+    font-size: 15px;
+    color: #8a5f10;
+    flex-shrink: 0;
+  }
+  .notice p { color: #4a3a12; max-width: 78ch; }
+  .notice strong { color: #241a05; }
+
+  /* ===== SEARCH BAR ===== */
+  .search-wrap {
+    margin-top: 26px;
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .search-wrap .prompt {
+    color: #7fe6a8;
+    font-size: 13px;
+    padding-left: 12px;
+    flex-shrink: 0;
+  }
+  .search-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    padding: 11px 4px;
+  }
+  .search-wrap input::placeholder { color: #6b7266; }
+  .search-wrap .clear-btn {
+    background: none;
+    border: none;
+    color: var(--mono-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+  .search-wrap .clear-btn:hover { color: var(--paper); }
+  .search-status {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--mono-dim);
+    min-height: 16px;
+  }
+  .search-status b { color: var(--ink); }
+
+  .external-lookup {
+    margin-top: 12px;
+    background: var(--panel);
+    border: 1px solid var(--ink);
+    border-left: 4px solid var(--android-c);
+    padding: 16px 20px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .external-lookup.show { display: flex; }
+  .external-lookup p {
+    font-size: 12.5px;
+    color: #3a4038;
+    max-width: 50ch;
+  }
+  .external-lookup p b { color: var(--ink); }
+  .external-lookup .links {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .external-lookup a {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 8px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .external-lookup a:hover { background: var(--android-c); }
+  .external-lookup a .arrow { font-size: 13px; }
+
+  tr.row-hidden { display: none; }
+  .no-match-row td {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--mono-dim);
+    font-size: 12.5px;
+  }
+  .no-match-row { display: none; }
+  .no-match-row.show { display: table-row; }
+  mark.hit {
+    background: var(--android-c);
+    color: var(--ink);
+    padding: 0 1px;
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    margin: 56px 0 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .section-label .idx {
+    font-family: var(--font-disp);
+    font-size: 13px;
+    color: var(--mono-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 3px 9px;
+  }
+  .section-label h2 {
+    font-family: var(--font-disp);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .section-label .rule { flex: 1; height: 1px; background: var(--line); }
+
+  /* ===== PLATFORM GRID ===== */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .pcard {
+    background: var(--panel);
+    padding: 22px 20px 20px;
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+  }
+  .pcard::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: var(--bar-c);
+  }
+  .pcard[data-p="android"] { --bar-c: var(--android-c); }
+  .pcard[data-p="ios"] { --bar-c: var(--ios-c); }
+  .pcard[data-p="windows"] { --bar-c: var(--win-c); }
+  .pcard[data-p="linux"] { --bar-c: var(--linux-c); }
+
+  .pcard .ptag {
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mono-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .pcard .plogo {
+    font-family: var(--font-disp);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 14px 0 2px;
+  }
+  .pcard .ptool {
+    font-size: 11.5px;
+    color: var(--mono-dim);
+    margin-bottom: 16px;
+  }
+  .pcard .pscore {
+    font-family: var(--font-disp);
+    font-size: 30px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: auto;
+  }
+  .pcard .pscore small {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 400;
+    color: var(--mono-dim);
+    display: block;
+    margin-top: 2px;
+  }
+  .pcard .pchip {
+    font-size: 11.5px;
+    color: #3a4038;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+
+  /* ===== ANDROID TABLE ===== */
+  .table-wrap {
+    background: var(--panel);
+    border: 1px solid var(--ink);
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  thead th {
+    text-align: left;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mono-dim);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ink);
+    background: #e4e7dd;
+    white-space: nowrap;
+  }
+  thead th.num { text-align: right; }
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f5f6f0; }
+  td.rank {
+    font-family: var(--font-disp);
+    font-weight: 700;
+    color: var(--mono-dim);
+    width: 34px;
+  }
+  tr[data-rank="1"] td.rank { color: var(--android-c); -webkit-text-stroke: 0.6px var(--ink); }
+  td.chipname { font-weight: 600; }
+  td.chipname .device { display: block; font-weight: 400; font-size: 11px; color: var(--mono-dim); margin-top: 2px; }
+  td.score {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  td.barcell { min-width: 160px; }
+  .bar-track {
+    height: 8px;
+    background: var(--line-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--android-c);
+  }
+
+  /* ===== NOTE STRIP ===== */
+  .note-strip {
+    margin-top: 14px;
+    font-size: 11.5px;
+    color: var(--mono-dim);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .note-strip .mark { color: var(--ink); font-weight: 700; }
+
+  /* ===== CROSS-PLATFORM CAVEAT BLOCK ===== */
+  .caveat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .caveat-card {
+    background: var(--panel);
+    border: 1px solid var(--ink);
+    padding: 20px 22px;
+  }
+  .caveat-card h3 {
+    font-family: var(--font-disp);
+    font-size: 14.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .caveat-card h3 .sw {
+    width: 8px; height: 8px;
+    display: inline-block;
+    background: var(--sw-c);
+  }
+  .caveat-card[data-p="win"] h3 .sw { --sw-c: var(--win-c); }
+  .caveat-card[data-p="lin"] h3 .sw { --sw-c: var(--linux-c); }
+  .caveat-card p { font-size: 12.5px; color: #3a4038; }
+  .caveat-card .tools {
+    margin-top: 12px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .caveat-card .tools span {
+    font-size: 10.5px;
+    border: 1px solid var(--line);
+    padding: 3px 8px;
+    color: var(--mono-dim);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--mono-dim);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 860px) {
+    .platform-grid { grid-template-columns: repeat(2, 1fr); }
+    .caveat-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 34px; }
+  }
+  @media (max-width: 520px) {
+    .platform-grid { grid-template-columns: 1fr; }
+    .frame { padding: 18px 14px 60px; }
+    header.hero { padding: 28px 20px 24px; }
+  }
+
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="termbar">
+  <div class="dots"><span></span><span></span><span></span></div>
+  <div>benchmark-compare.sys</div>
+  <div class="status">dữ liệu đã tải</div>
+</div>
+
+<div class="frame">
+
+  <header class="hero">
+    <div class="eyebrow">Đối chiếu hiệu năng thiết bị thực tế <span class="rule"></span> Cập nhật T7/2026</div>
+    <h1>Máy nào mạnh hơn <span class="accent">máy nào</span>, đo đúng công cụ.</h1>
+    <p class="hero-sub">So sánh trực tiếp các dòng điện thoại, laptop và PC đang bán ra — không phải chip trần. AnTuTu chấm điện thoại Android/iOS; Geekbench 6 chấm máy tính Windows/Linux/macOS. Trang này đặt cả bốn nhóm thiết bị cạnh nhau, giữ nguyên tắc: <strong>không quy đổi điểm số giữa hai công cụ khác nhau.</strong></p>
+    <div class="hero-meta">
+      <div><b>18</b> thiết bị</div>
+      <div><b>2</b> hệ đo lường</div>
+      <div><b>0</b> điểm quy đổi chéo</div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="prompt">&gt;</span>
+      <input type="text" id="deviceSearch" placeholder="Tìm điện thoại hoặc máy tính… ví dụ: iQOO 15, iPhone, MacBook" autocomplete="off">
+      <button class="clear-btn" id="clearSearch" type="button">xóa ✕</button>
+    </div>
+    <div class="search-status" id="searchStatus"></div>
+    <div class="external-lookup" id="externalLookup">
+      <p>Không có trong <b>18 thiết bị</b> đã đối chiếu sẵn. Tra điểm thật cho tên máy này ở nguồn ngoài:</p>
+      <div class="links" id="externalLinks"></div>
+    </div>
+  </header>
+
+  <div class="notice">
+    <div class="glyph">!</div>
+    <p><strong>Vì sao điện thoại và máy tính không chung một bảng điểm:</strong> AnTuTu không có phiên bản desktop chính thức cho Windows hay Linux, nên "điểm AnTuTu" của một chiếc laptop không tồn tại. Muốn so sánh máy tính, giới kỹ thuật dùng Geekbench 6 — công cụ hiếm hoi chạy được trên cả iOS, Android, macOS, Windows lẫn Linux. Mục 02 là điện thoại đo bằng AnTuTu, mục 03 là máy tính đo bằng Geekbench 6 — hai bảng riêng, không gộp chung điểm.</p>
+  </div>
+
+  <!-- SECTION 01 — DEVICE OVERVIEW -->
+  <div class="section-label">
+    <span class="idx">01</span>
+    <h2>Thiết bị dẫn đầu mỗi nhóm</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="platform-grid">
+    <div class="pcard" data-p="android">
+      <div class="ptag"><span>Điện thoại</span><span>●</span></div>
+      <div class="plogo">iQOO 15 Ultra</div>
+      <div class="ptool">Android · đo bằng AnTuTu 10</div>
+      <div class="pscore">4.142.923<small>điểm AnTuTu · hạng 1 flagship T7/2026</small></div>
+      <div class="pchip">Chip: Snapdragon 8 Elite Gen 5</div>
+    </div>
+
+    <div class="pcard" data-p="ios">
+      <div class="ptag"><span>Điện thoại</span><span>●</span></div>
+      <div class="plogo">iPhone 17 Pro Max</div>
+      <div class="ptool">iOS · đo bằng AnTuTu 10</div>
+      <div class="pscore">2.112.459<small>điểm AnTuTu · hạng 1 nhóm iOS</small></div>
+      <div class="pchip">Chip: Apple A19 Pro</div>
+    </div>
+
+    <div class="pcard" data-p="windows">
+      <div class="ptag"><span>Laptop</span><span>●</span></div>
+      <div class="plogo">Laptop Windows cao cấp</div>
+      <div class="ptool">Windows · đo bằng Geekbench 6</div>
+      <div class="pscore">~9.000<small>điểm đa nhân · nhóm Ultra 9 / Ryzen AI cao cấp</small></div>
+      <div class="pchip">Không dùng thang AnTuTu — xem mục 03</div>
+    </div>
+
+    <div class="pcard" data-p="linux">
+      <div class="ptag"><span>PC / Máy trạm</span><span>●</span></div>
+      <div class="plogo">PC chạy Linux</div>
+      <div class="ptool">Linux · đo bằng Geekbench 6</div>
+      <div class="pscore">Theo cấu hình<small>cùng phần cứng x86 với Windows</small></div>
+      <div class="pchip">Không dùng thang AnTuTu — xem mục 03</div>
+    </div>
+  </div>
+
+  <!-- SECTION 02 — PHONE ANTUTU TABLE -->
+  <div class="section-label">
+    <span class="idx">02</span>
+    <h2>Bảng điểm AnTuTu — Điện thoại Android &amp; iOS</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th>Điện thoại</th>
+          <th>Nền tảng</th>
+          <th class="num">Điểm AnTuTu 10</th>
+          <th style="width:180px">So sánh</th>
+        </tr>
+      </thead>
+      <tbody id="phoneTableBody">
+        <tr data-rank="1" data-name="iQOO 15 Ultra">
+          <td class="rank">01</td>
+          <td class="chipname">iQOO 15 Ultra<span class="device">Snapdragon 8 Elite Gen 5</span></td>
+          <td>Android</td>
+          <td class="score">4.142.923</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></td>
+        </tr>
+        <tr data-rank="2" data-name="RedMagic 11S Pro Plus">
+          <td class="rank">02</td>
+          <td class="chipname">RedMagic 11S Pro Plus<span class="device">Snapdragon 8 Elite Gen 5 (ép xung)</span></td>
+          <td>Android</td>
+          <td class="score">4.101.393</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:99%"></div></div></td>
+        </tr>
+        <tr data-rank="3" data-name="iQOO 15">
+          <td class="rank">03</td>
+          <td class="chipname">iQOO 15<span class="device">Snapdragon 8 Elite Gen 5</span></td>
+          <td>Android</td>
+          <td class="score">4.052.100</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:98%"></div></div></td>
+        </tr>
+        <tr data-rank="4" data-name="vivo X300 Ultra">
+          <td class="rank">04</td>
+          <td class="chipname">vivo X300 Ultra<span class="device">Snapdragon 8 Elite Gen 5</span></td>
+          <td>Android</td>
+          <td class="score">3.964.767</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:96%"></div></div></td>
+        </tr>
+        <tr data-rank="5" data-name="realme GT8 Pro">
+          <td class="rank">05</td>
+          <td class="chipname">realme GT8 Pro<span class="device">Snapdragon 8 Elite Gen 5</span></td>
+          <td>Android</td>
+          <td class="score">3.958.736</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div></td>
+        </tr>
+        <tr data-rank="6" data-name="OPPO Find X9 Ultra">
+          <td class="rank">06</td>
+          <td class="chipname">OPPO Find X9 Ultra<span class="device">Snapdragon 8 Elite Gen 5</span></td>
+          <td>Android</td>
+          <td class="score">3.890.437</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:94%"></div></div></td>
+        </tr>
+        <tr data-rank="7" data-name="iPhone 17 Pro Max">
+          <td class="rank">07</td>
+          <td class="chipname">iPhone 17 Pro Max<span class="device">Apple A19 Pro</span></td>
+          <td>iOS</td>
+          <td class="score">2.112.459</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:51%"></div></div></td>
+        </tr>
+        <tr data-rank="8" data-name="iQOO Z11">
+          <td class="rank">08</td>
+          <td class="chipname">iQOO Z11<span class="device">Dimensity 8500 · tầm trung</span></td>
+          <td>Android</td>
+          <td class="score">2.308.635</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:56%"></div></div></td>
+        </tr>
+        <tr class="no-match-row" id="phoneNoMatch"><td colspan="5">Không tìm thấy điện thoại khớp — thử tên khác, ví dụ "iQOO" hoặc "iPhone".</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note-strip"><span class="mark">＊</span> Điểm ghi nhận từ bảng xếp hạng AnTuTu công khai (MobileCity, CellphoneS), tính đến tháng 7/2026. iPhone xếp trong nhóm iOS riêng — không cạnh tranh trực tiếp cùng bảng với Android vì hệ điều hành khác nhau.</div>
+
+  <!-- SECTION 03 — LAPTOP/PC GEEKBENCH TABLE -->
+  <div class="section-label">
+    <span class="idx">03</span>
+    <h2>Bảng điểm Geekbench 6 — Laptop &amp; PC Windows / Linux</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th>Máy tính</th>
+          <th>Hệ điều hành</th>
+          <th class="num">Đa nhân (GB6)</th>
+          <th style="width:180px">So sánh</th>
+        </tr>
+      </thead>
+      <tbody id="pcTableBody">
+        <tr data-rank="1" data-name="MacBook Pro 14&quot; (M4 Max)">
+          <td class="rank">01</td>
+          <td class="chipname">MacBook Pro 14" (M4 Max)<span class="device">tham chiếu — không chạy Windows/Linux mặc định</span></td>
+          <td>macOS</td>
+          <td class="score">~12.000+</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></td>
+        </tr>
+        <tr data-rank="2" data-name="Laptop Windows Ultra 9 / Ryzen AI cao cấp">
+          <td class="rank">02</td>
+          <td class="chipname">Laptop Windows Ultra 9 / Ryzen AI cao cấp<span class="device">nhóm workstation di động 2026</span></td>
+          <td>Windows</td>
+          <td class="score">~9.500</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:79%"></div></div></td>
+        </tr>
+        <tr data-rank="3" data-name="PC cùng cấu hình chạy Linux">
+          <td class="rank">03</td>
+          <td class="chipname">PC cùng cấu hình chạy Linux<span class="device">cùng phần cứng x86 với dòng trên</span></td>
+          <td>Linux</td>
+          <td class="score">~9.500</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:79%"></div></div></td>
+        </tr>
+        <tr data-rank="4" data-name="MacBook Air (M4)">
+          <td class="rank">04</td>
+          <td class="chipname">MacBook Air (M4)<span class="device">tham chiếu</span></td>
+          <td>macOS</td>
+          <td class="score">~9.000</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div></td>
+        </tr>
+        <tr data-rank="5" data-name="Laptop Windows phổ thông (Aspire / Vivobook / IdeaPad)">
+          <td class="rank">05</td>
+          <td class="chipname">Laptop Windows phổ thông (Aspire / Vivobook / IdeaPad)<span class="device">tầm 15-17 triệu, 2026</span></td>
+          <td>Windows</td>
+          <td class="score">~5.500–6.500</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div></td>
+        </tr>
+        <tr data-rank="6" data-name="MacBook Neo (A18 Pro)">
+          <td class="rank">06</td>
+          <td class="chipname">MacBook Neo (A18 Pro)<span class="device">tham chiếu — Apple Silicon, không phải Windows/Linux</span></td>
+          <td>macOS</td>
+          <td class="score">~8.958</td>
+          <td class="barcell"><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div></td>
+        </tr>
+        <tr class="no-match-row" id="pcNoMatch"><td colspan="5">Không tìm thấy máy tính khớp — thử tên khác, ví dụ "MacBook" hoặc "Windows".</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note-strip"><span class="mark">＊</span> "PC cùng cấu hình chạy Linux" là ước tính, vì cùng một bộ phần cứng x86 cho điểm Geekbench gần như tương đương giữa Windows và Linux — chênh lệch chủ yếu đến từ driver và lịch điều phối nhân, không phải từ hệ điều hành. Dòng macOS được giữ lại làm mốc tham chiếu vì Geekbench 6 là công cụ chạy được trên cả bốn hệ điều hành.</div>
+
+  <footer>
+    <span>Nguồn: MobileCity, CellphoneS, Kimovil, MacRumors, Tinhte — dữ liệu công khai T1–T7/2026</span>
+    <span>benchmark-compare.sys · trạng thái: đã đối chiếu</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('deviceSearch');
+  var clearBtn = document.getElementById('clearSearch');
+  var status = document.getElementById('searchStatus');
+  var phoneBody = document.getElementById('phoneTableBody');
+  var pcBody = document.getElementById('pcTableBody');
+  var phoneNoMatch = document.getElementById('phoneNoMatch');
+  var pcNoMatch = document.getElementById('pcNoMatch');
+
+  function normalize(s) {
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  function highlight(cellEl, query) {
+    var span = cellEl.querySelector('.device');
+    var deviceText = span ? span.textContent : '';
+    var mainText = cellEl.childNodes[0] ? cellEl.childNodes[0].textContent : cellEl.textContent;
+    if (!query) {
+      cellEl.innerHTML = mainText + (span ? '<span class="device">' + deviceText + '</span>' : '');
+      return;
+    }
+    var re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+    var newMain = mainText.replace(re, '<mark class="hit">$1</mark>');
+    cellEl.innerHTML = newMain + (span ? '<span class="device">' + deviceText + '</span>' : '');
+  }
+
+  function filterTable(tbody, noMatchRow, query) {
+    var rows = tbody.querySelectorAll('tr[data-name]');
+    var visibleCount = 0;
+    rows.forEach(function (row) {
+      var name = normalize(row.getAttribute('data-name'));
+      var cell = row.querySelector('.chipname');
+      var deviceSub = cell.querySelector('.device');
+      var subText = deviceSub ? normalize(deviceSub.textContent) : '';
+      var match = !query || name.indexOf(query) !== -1 || subText.indexOf(query) !== -1;
+      row.classList.toggle('row-hidden', !match);
+      if (match) {
+        visibleCount++;
+        highlight(cell, query && name.indexOf(query) !== -1 ? input.value.trim() : '');
+      } else {
+        highlight(cell, '');
+      }
+    });
+    noMatchRow.classList.toggle('show', visibleCount === 0);
+    return visibleCount;
+  }
+
+  function buildExternalLinks(raw) {
+    var q = encodeURIComponent(raw + ' AnTuTu benchmark điểm');
+    var qGB = encodeURIComponent(raw + ' Geekbench 6 score');
+    var qKimovil = encodeURIComponent(raw);
+    return [
+      { label: 'Google', url: 'https://www.google.com/search?q=' + q },
+      { label: 'Kimovil AnTuTu', url: 'https://www.kimovil.com/en/where-to-buy-smartphones?utm_source=antutu&s=' + qKimovil },
+      { label: 'Geekbench Browser', url: 'https://browser.geekbench.com/search?utf8=%E2%9C%93&q=' + qGB },
+      { label: 'AnTuTu Ranking', url: 'https://www.antutu.com/en/ranking/rank1.htm' }
+    ];
+  }
+
+  function runSearch() {
+    var raw = input.value.trim();
+    var query = normalize(raw);
+    var phoneVisible = filterTable(phoneBody, phoneNoMatch, query);
+    var pcVisible = filterTable(pcBody, pcNoMatch, query);
+    var externalBox = document.getElementById('externalLookup');
+    var externalLinks = document.getElementById('externalLinks');
+
+    if (!raw) {
+      status.textContent = '';
+      externalBox.classList.remove('show');
+      return;
+    }
+    var total = phoneVisible + pcVisible;
+    if (total === 0) {
+      status.innerHTML = 'Không có kết quả cho "<b>' + raw + '</b>" trong 18 thiết bị đã đối chiếu.';
+      var links = buildExternalLinks(raw);
+      externalLinks.innerHTML = links.map(function (l) {
+        return '<a href="' + l.url + '" target="_blank" rel="noopener noreferrer">' + l.label + '<span class="arrow">↗</span></a>';
+      }).join('');
+      externalBox.querySelector('p').innerHTML = 'Không có trong <b>18 thiết bị</b> đã đối chiếu sẵn. Tra điểm thật cho "<b>' + raw + '</b>" ở nguồn ngoài:';
+      externalBox.classList.add('show');
+    } else {
+      var parts = [];
+      if (phoneVisible > 0) parts.push(phoneVisible + ' điện thoại');
+      if (pcVisible > 0) parts.push(pcVisible + ' máy tính');
+      status.innerHTML = 'Tìm thấy <b>' + total + '</b> kết quả cho "<b>' + raw + '</b>" — ' + parts.join(', ') + '.';
+      externalBox.classList.remove('show');
+    }
+  }
+
+  input.addEventListener('input', runSearch);
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    runSearch();
+    document.getElementById('externalLookup').classList.remove('show');
+    input.focus();
+  });
+})();
+</script>
+</body>
+</html>
